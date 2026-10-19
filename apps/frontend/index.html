@@ -1,0 +1,270 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="description" content="Sistema de Contaduría Municipal de Trancas — gestión contable segura para personal autorizado" />
+    <meta name="application-name" content="Contaduria" />
+    <meta name="theme-color" content="#0f172a" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#0f172a" media="(prefers-color-scheme: dark)" />
+    <meta name="color-scheme" content="light" />
+    <meta name="referrer" content="strict-origin-when-cross-origin" />
+    <meta name="format-detection" content="telephone=no" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="Contaduria" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <link rel="icon" type="image/svg+xml" href="/icons/icon.svg" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32.png" />
+    <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
+    <link rel="mask-icon" href="/icons/icon.svg" color="#1e3a8a" />
+    <title>Contaduria</title>
+    <style>
+      /* Splash inmediato (antes de React/CSS) — evita pantalla blanca */
+      html, body {
+        margin: 0;
+        min-height: 100%;
+        background: #0f172a;
+      }
+      #boot-splash {
+        position: fixed;
+        inset: 0;
+        z-index: 2147483646;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 1rem;
+        padding: 1.5rem;
+        background: #0f172a;
+        color: #e2e8f0;
+        font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+        text-align: center;
+        transition: opacity 0.25s ease, visibility 0.25s ease;
+      }
+      #boot-splash.boot-hidden {
+        opacity: 0;
+        visibility: hidden;
+        pointer-events: none;
+      }
+      #boot-splash .boot-mark {
+        width: 3.25rem;
+        height: 3.25rem;
+        border-radius: 0.85rem;
+        background: #1e3a8a;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.35rem;
+        font-weight: 700;
+        color: #fff;
+        letter-spacing: -0.02em;
+      }
+      #boot-splash .boot-title {
+        margin: 0;
+        font-size: 1.125rem;
+        font-weight: 600;
+        color: #f8fafc;
+      }
+      #boot-splash .boot-sub {
+        margin: 0;
+        font-size: 0.875rem;
+        color: #94a3b8;
+      }
+      #boot-splash .boot-spinner {
+        width: 1.75rem;
+        height: 1.75rem;
+        margin-top: 0.5rem;
+        border: 2px solid rgba(148, 163, 184, 0.35);
+        border-top-color: #93c5fd;
+        border-radius: 9999px;
+        animation: boot-spin 0.75s linear infinite;
+      }
+      #boot-splash .boot-error {
+        display: none;
+        max-width: 22rem;
+        margin-top: 0.75rem;
+        padding: 1rem 1.1rem;
+        border-radius: 0.75rem;
+        border: 1px solid rgba(251, 191, 36, 0.45);
+        background: rgba(15, 23, 42, 0.85);
+        text-align: left;
+      }
+      #boot-splash.boot-failed .boot-spinner { display: none; }
+      #boot-splash.boot-failed .boot-error { display: block; }
+      #boot-splash .boot-error p {
+        margin: 0 0 0.75rem;
+        font-size: 0.8125rem;
+        line-height: 1.45;
+        color: #fde68a;
+      }
+      #boot-splash .boot-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+      }
+      #boot-splash button {
+        appearance: none;
+        border: 1px solid #334155;
+        background: #1e293b;
+        color: #f1f5f9;
+        border-radius: 0.5rem;
+        padding: 0.55rem 0.9rem;
+        font-size: 0.8125rem;
+        font-weight: 600;
+        cursor: pointer;
+      }
+      #boot-splash button.primary {
+        background: #1d4ed8;
+        border-color: #1d4ed8;
+      }
+      @keyframes boot-spin {
+        to { transform: rotate(360deg); }
+      }
+      #pwa-boot-reload {
+        position: fixed;
+        bottom: 1rem;
+        right: 1rem;
+        z-index: 2147483647;
+        width: 2.75rem;
+        height: 2.75rem;
+        border-radius: 9999px;
+        border: 1px solid #e2e8f0;
+        background: #fff;
+        color: #334155;
+        box-shadow: 0 4px 14px rgba(15, 23, 42, 0.12);
+        cursor: pointer;
+        font-size: 1.15rem;
+        line-height: 1;
+        display: none;
+        align-items: center;
+        justify-content: center;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="boot-splash" role="status" aria-live="polite" aria-busy="true">
+      <div class="boot-mark" aria-hidden="true">CM</div>
+      <p class="boot-title">Contaduría Municipal</p>
+      <p class="boot-sub" id="boot-status">Cargando aplicación…</p>
+      <div class="boot-spinner" aria-hidden="true"></div>
+      <div class="boot-error" id="boot-error">
+        <p id="boot-error-msg">
+          La aplicación tardó demasiado en iniciar. Puede deberse a una actualización,
+          caché desactualizada o a que el servidor aún no está listo.
+        </p>
+        <div class="boot-actions">
+          <button type="button" class="primary" id="boot-reload-btn">Recargar</button>
+          <button type="button" id="boot-clear-btn">Limpiar caché y recargar</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="root"></div>
+
+    <button
+      id="pwa-boot-reload"
+      type="button"
+      title="Recargar aplicación"
+      aria-label="Recargar aplicación"
+    >
+      ↻
+    </button>
+
+    <script>
+      (function () {
+        var BOOT_TIMEOUT_MS = 12000;
+        var splash = document.getElementById('boot-splash');
+        var statusEl = document.getElementById('boot-status');
+        var btn = document.getElementById('pwa-boot-reload');
+        var reloadBtn = document.getElementById('boot-reload-btn');
+        var clearBtn = document.getElementById('boot-clear-btn');
+        var failed = false;
+
+        function isStandalone() {
+          try {
+            return (
+              window.matchMedia('(display-mode: standalone)').matches ||
+              navigator.standalone === true
+            );
+          } catch (_) {
+            return false;
+          }
+        }
+
+        function hardReload() {
+          try {
+            window.location.reload();
+          } catch (_) {
+            window.location.href = window.location.href;
+          }
+        }
+
+        async function clearCachesAndReload() {
+          try {
+            if ('caches' in window) {
+              var keys = await caches.keys();
+              await Promise.all(keys.map(function (k) { return caches.delete(k); }));
+            }
+            if ('serviceWorker' in navigator) {
+              var regs = await navigator.serviceWorker.getRegistrations();
+              await Promise.all(regs.map(function (r) { return r.unregister(); }));
+            }
+          } catch (_) {}
+          hardReload();
+        }
+
+        function showBootFailure(message) {
+          if (!splash || failed) return;
+          failed = true;
+          splash.classList.add('boot-failed');
+          splash.setAttribute('aria-busy', 'false');
+          if (statusEl) statusEl.textContent = 'No se pudo iniciar';
+          var msg = document.getElementById('boot-error-msg');
+          if (msg && message) msg.textContent = message;
+          if (btn) {
+            btn.style.display = 'flex';
+          }
+        }
+
+        window.__contaduriaDismissBootSplash = function () {
+          if (!splash) return;
+          splash.classList.add('boot-hidden');
+          splash.setAttribute('aria-busy', 'false');
+          window.setTimeout(function () {
+            if (splash && splash.parentNode) splash.parentNode.removeChild(splash);
+          }, 300);
+        };
+
+        if (btn) {
+          btn.addEventListener('click', hardReload);
+          if (isStandalone()) btn.style.display = 'flex';
+        }
+        if (reloadBtn) reloadBtn.addEventListener('click', hardReload);
+        if (clearBtn) clearBtn.addEventListener('click', function () { clearCachesAndReload(); });
+
+        // Si React no monta a tiempo, mostrar recuperación (todas las pantallas, no solo PWA)
+        window.setTimeout(function () {
+          if (window.__CONTADURIA_BOOTED__) return;
+          var root = document.getElementById('root');
+          if (root && root.childElementCount > 0) return;
+          showBootFailure(
+            'La aplicación tardó demasiado en iniciar. Recargá o limpiá la caché si el problema continúa (común en la PWA tras una actualización).'
+          );
+        }, BOOT_TIMEOUT_MS);
+
+        // Errores de carga del entry module (antes de que corra main.tsx)
+        window.addEventListener('error', function (event) {
+          if (window.__CONTADURIA_BOOTED__) return;
+          var msg = (event && event.message) ? String(event.message) : '';
+          if (/loading chunk|dynamically imported module|importing a module script failed/i.test(msg)) {
+            showBootFailure(
+              'Hay archivos desactualizados en caché. Usá “Limpiar caché y recargar” para continuar.'
+            );
+          }
+        });
+      })();
+    </script>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

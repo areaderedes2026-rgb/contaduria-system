@@ -1,0 +1,22 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: contaduria-postgres
+    restart: unless-stopped
+    # Solo localhost: el backend en la misma PC se conecta; no exponer Postgres a la WiFi/LAN
+    ports:
+      - "127.0.0.1:5433:5432"
+    environment:
+      POSTGRES_DB: contaduria
+      POSTGRES_USER: contaduria
+      POSTGRES_PASSWORD: contaduria_dev
+    volumes:
+      - contaduria_pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U contaduria -d contaduria"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  contaduria_pg_data:

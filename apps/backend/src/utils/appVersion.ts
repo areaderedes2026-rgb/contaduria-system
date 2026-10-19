@@ -1,0 +1,60 @@
+import { existsSync, readFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+export interface AppVersionInfo {
+  version: string;
+  commit: string;
+  branch?: string;
+  builtAt: string;
+}
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+
+const CANDIDATES = [
+  join(__dirname, '../version.json'),
+  join(__dirname, '../../frontend/dist/version.json'),
+  join(__dirname, '../../../frontend/dist/version.json'),
+];
+
+let cached: AppVersionInfo | null = null;
+
+function readVersionFile(path: string): AppVersionInfo | null {
+  try {
+    if (!existsSync(path)) return null;
+    const data = JSON.parse(readFileSync(path, 'utf8')) as Partial<AppVersionInfo>;
+    if (!data.version || !data.commit || !data.builtAt) return null;
+    return {
+      version: data.version,
+      commit: data.commit,
+      branch: data.branch,
+      builtAt: data.builtAt,
+    };
+  } catch {
+    return null;
+  }
+}
+
+export function getAppVersion(): AppVersionInfo {
+  if (cached) return cached;
+
+  for (const path of CANDIDATES) {
+    const info = readVersionFile(path);
+    if (info) {
+      cached = info;
+      return info;
+    }
+  }
+
+  cached = {
+    version: '1.0.0',
+    commit: 'dev',
+    builtAt: new Date(0).toISOString(),
+  };
+  return cached;
+}
+
+/** Invalida caché (útil tras hot-reload en desarrollo). */
+export function resetAppVersionCache() {
+  cached = null;
+}

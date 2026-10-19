@@ -1,0 +1,33 @@
+{
+  "name": "contaduria-municipal",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Sistema de Contaduría Municipal de Trancas",
+  "workspaces": [
+    "apps/*"
+  ],
+  "scripts": {
+    "setup": "node infra/scripts/setup.mjs",
+    "dev": "concurrently -n backend,frontend -c blue,green \"npm run dev -w @contaduria/backend\" \"npm run dev -w @contaduria/frontend\"",
+    "dev:backend": "npm run dev -w @contaduria/backend",
+    "dev:frontend": "npm run dev -w @contaduria/frontend",
+    "build": "npm run build -w @contaduria/backend && npm run build -w @contaduria/frontend && node infra/scripts/write-version.mjs",
+    "build:backend": "npm run build -w @contaduria/backend",
+    "build:frontend": "npm run build -w @contaduria/frontend",
+    "start:prod": "npm run start -w @contaduria/backend",
+    "db:up": "docker compose -f infra/docker/docker-compose.yml up -d",
+    "db:down": "docker compose -f infra/docker/docker-compose.yml down",
+    "db:reset": "docker compose -f infra/docker/docker-compose.yml down -v && docker compose -f infra/docker/docker-compose.yml up -d && node infra/scripts/wait-db.mjs && npm run db:migrate && npm run db:seed",
+    "db:migrate": "npm run db:migrate -w @contaduria/backend",
+    "db:seed": "npm run db:seed -w @contaduria/backend",
+    "db:status": "npm run db:status -w @contaduria/backend",
+    "deploy": "node infra/scripts/deploy.mjs",
+    "office:certs": "node infra/scripts/generar-certs-oficina.mjs"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}

@@ -1,8 +1,15 @@
 @echo off
-chcp 65001 >nul
-title Contaduría Municipal — iniciar servidor
-cd /d "%~dp0..\.."
+setlocal
+set "ROOT=%~dp0..\.."
+cd /d "%ROOT%"
+if not exist "package.json" (
+  echo ERROR: No se encontro package.json.
+  echo Carpeta actual: %CD%
+  pause
+  exit /b 1
+)
 
+title Contaduria - Iniciar servidor
 echo Iniciando PostgreSQL (Docker)...
 call npm run db:up
 
@@ -18,6 +25,6 @@ if errorlevel 1 (
 )
 
 echo.
-echo Si no abre, pruebe en el navegador: https://127.0.0.1:3000
+echo Si no abre, pruebe en el navegador: https://contaduria.local:3000
 echo.
 exit /b 0

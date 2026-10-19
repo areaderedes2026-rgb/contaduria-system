@@ -1,6 +1,5 @@
 @echo off
-chcp 65001 >nul
-title Contaduría — acceso de esta PC
+setlocal
 cd /d "%~dp0"
 
 set "PS1=%~dp0configurar-acceso-cliente.ps1"

@@ -1,13 +1,22 @@
 @echo off
-chcp 65001 >nul
-title Actualizar Contaduría Municipal
-cd /d "%~dp0..\.."
+setlocal
+set "ROOT=%~dp0..\.."
+cd /d "%ROOT%"
+if not exist "package.json" (
+  echo ERROR: No se encontro package.json.
+  echo Carpeta actual: %CD%
+  pause
+  exit /b 1
+)
 
+title Contaduria - Actualizar
 echo.
 echo ============================================
-echo   Actualizar Contaduría Municipal
+echo   Actualizar Contaduria Municipal
 echo   Solo en la PC PRINCIPAL (servidor)
 echo ============================================
+echo.
+echo Carpeta: %CD%
 echo.
 
 where node >nul 2>&1

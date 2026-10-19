@@ -16,7 +16,7 @@ El comando `setup` realiza automáticamente:
 2. Instala dependencias (`npm install`)
 3. Inicia PostgreSQL con Docker
 4. Ejecuta migraciones (`npm run db:migrate`)
-5. Carga datos iniciales (`npm run db:seed`)
+5. Carga lo mínimo para entrar (`npm run db:seed`: roles y usuario admin). No carga cuentas ni documentos de ejemplo.
 
 ### 2. Desarrollo
 
@@ -79,6 +79,8 @@ npm run db:status
 2. Commit y push a GitHub
 3. En la **PC principal** de la oficina: doble clic en **Actualizar Contaduría** (acceso a `infra/scripts/actualizar-contaduria.bat`) o `npm run deploy`
 4. En las PCs de trabajo: cartel “Nueva versión disponible” → Recargar
+
+Si cambia el WiFi o la IP: **Cambiar red** en el servidor (`infra/scripts/cambiar-red.bat`) y en cada puesto `configurar-acceso-cliente.bat`. La URL sigue siendo `https://contaduria.local:3000`.
 
 **Nunca desarrollar directamente en producción.**  
 Las PCs de trabajo **no** clonan el repo: solo usan el navegador/PWA contra el servidor.

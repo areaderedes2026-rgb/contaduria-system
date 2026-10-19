@@ -22,7 +22,8 @@
     "db:seed": "npm run db:seed -w @contaduria/backend",
     "db:status": "npm run db:status -w @contaduria/backend",
     "deploy": "node infra/scripts/deploy.mjs",
-    "office:certs": "node infra/scripts/generar-certs-oficina.mjs"
+    "office:certs": "node infra/scripts/generar-certs-oficina.mjs",
+    "office:red": "node infra/scripts/cambiar-red.mjs"
   },
   "devDependencies": {
     "concurrently": "^9.1.2"

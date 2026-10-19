@@ -33,6 +33,7 @@ export default defineConfig({
         dir: 'ltr',
         start_url: '/',
         scope: '/',
+        // Instalar siempre desde https://contaduria.local:3000 para que un cambio de IP no rompa la PWA.
         categories: ['business', 'finance', 'productivity'],
         prefer_related_applications: false,
         icons: [

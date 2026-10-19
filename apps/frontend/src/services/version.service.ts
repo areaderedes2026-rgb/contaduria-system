@@ -6,6 +6,12 @@ export interface AppVersionInfo {
   commit: string;
   branch?: string;
   builtAt: string;
+  access?: {
+    hostname: string;
+    ip: string;
+    port: number;
+    url: string;
+  };
 }
 
 export function versionFingerprint(info: AppVersionInfo): string {

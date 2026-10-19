@@ -1,5 +1,6 @@
--- Migración: Campos municipales de expedientes
--- letra, asunto, causante, area_destino, fecha_ingreso, fecha_nota
+-- Campos municipales de expedientes (letra, asunto, causante, area_destino, fechas).
+-- Idempotente: en instalaciones nuevas 003 ya crea letra/asunto/causante/fecha_ingreso
+-- y no existe la columna vieja "fecha". En bases antiguas sí hay que copiar fecha → fecha_ingreso.
 
 ALTER TABLE expedientes ADD COLUMN IF NOT EXISTS letra VARCHAR(10);
 ALTER TABLE expedientes ADD COLUMN IF NOT EXISTS asunto TEXT;
@@ -8,14 +9,27 @@ ALTER TABLE expedientes ADD COLUMN IF NOT EXISTS area_destino VARCHAR(255);
 ALTER TABLE expedientes ADD COLUMN IF NOT EXISTS fecha_ingreso DATE;
 ALTER TABLE expedientes ADD COLUMN IF NOT EXISTS fecha_nota DATE;
 
-UPDATE expedientes SET
-  letra = COALESCE(letra, 'E'),
-  asunto = COALESCE(asunto, descripcion),
-  causante = COALESCE(causante, destinatario),
-  area_destino = COALESCE(area_destino, ''),
-  fecha_ingreso = COALESCE(fecha_ingreso, fecha),
-  fecha_nota = COALESCE(fecha_nota, fecha)
-WHERE fecha IS NOT NULL OR destinatario IS NOT NULL OR descripcion IS NOT NULL;
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1
+    FROM information_schema.columns
+    WHERE table_schema = 'public'
+      AND table_name = 'expedientes'
+      AND column_name = 'fecha'
+  ) THEN
+    EXECUTE $sql$
+      UPDATE expedientes SET
+        letra = COALESCE(letra, 'E'),
+        asunto = COALESCE(asunto, descripcion),
+        causante = COALESCE(causante, destinatario),
+        area_destino = COALESCE(area_destino, ''),
+        fecha_ingreso = COALESCE(fecha_ingreso, fecha),
+        fecha_nota = COALESCE(fecha_nota, fecha)
+      WHERE fecha IS NOT NULL OR destinatario IS NOT NULL OR descripcion IS NOT NULL
+    $sql$;
+  END IF;
+END $$;
 
 UPDATE expedientes SET
   letra = COALESCE(letra, 'E'),

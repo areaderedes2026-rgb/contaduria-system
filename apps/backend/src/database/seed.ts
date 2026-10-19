@@ -104,54 +104,8 @@ async function seed(): Promise<void> {
   );
   console.log('✓ Configuración');
 
-  await seedCuentasEjemplo();
-  console.log('✓ Cuentas de ejemplo');
-
+  console.log('✓ Base operativa vacía (sin cuentas, proveedores ni documentos de ejemplo)');
   console.log('\n=== Seed completado ===');
-}
-
-async function seedCuentasEjemplo(): Promise<void> {
-  const cuentas = [
-    { codigo: '1', descripcion: 'Recursos', tipo: 'RECURSO', padre: null, saldo: 0 },
-    { codigo: '1.1', descripcion: 'Recursos ordinarios', tipo: 'RECURSO', padre: '1', saldo: 0 },
-    { codigo: '1.1.01', descripcion: 'Impuestos', tipo: 'RECURSO', padre: '1.1', saldo: 5000000 },
-    { codigo: '1.1.01.12', descripcion: 'Tasas municipales', tipo: 'RECURSO', padre: '1.1.01', saldo: 2500000 },
-    { codigo: '1.1.01.12.10', descripcion: 'Tasa de servicios generales', tipo: 'RECURSO', padre: '1.1.01.12', saldo: 1200000 },
-    { codigo: '1.1.01.12.10.11', descripcion: 'Tasa por servicio de limpieza', tipo: 'RECURSO', padre: '1.1.01.12.10', saldo: 800000 },
-    { codigo: '2', descripcion: 'Gastos', tipo: 'GASTO', padre: null, saldo: 0 },
-    { codigo: '2.1', descripcion: 'Gastos corrientes', tipo: 'GASTO', padre: '2', saldo: 0 },
-    { codigo: '2.1.01', descripcion: 'Gastos de personal', tipo: 'GASTO', padre: '2.1', saldo: 3500000 },
-    { codigo: '2.1.02', descripcion: 'Gastos de bienes de consumo', tipo: 'GASTO', padre: '2.1', saldo: 1800000 },
-    { codigo: '3', descripcion: 'Patrimonial', tipo: 'PATRIMONIAL', padre: null, saldo: 0 },
-    { codigo: '3.1', descripcion: 'Bienes de uso', tipo: 'PATRIMONIAL', padre: '3', saldo: 4200000 },
-  ];
-
-  const idByCodigo = new Map<string, number>();
-
-  for (const cuenta of cuentas) {
-    const existing = await query<{ id: number }>(
-      'SELECT id FROM cuentas WHERE codigo = $1',
-      [cuenta.codigo]
-    );
-    if (existing.rows.length > 0) {
-      idByCodigo.set(cuenta.codigo, existing.rows[0].id);
-      continue;
-    }
-
-    let padreId: number | null = null;
-    if (cuenta.padre) {
-      padreId = idByCodigo.get(cuenta.padre) ?? null;
-    }
-
-    const nivel = cuenta.codigo.split('.').length;
-    const result = await query<{ id: number }>(
-      `INSERT INTO cuentas (codigo, descripcion, tipo, cuenta_padre_id, nivel, saldo_inicial)
-       VALUES ($1, $2, $3, $4, $5, $6)
-       RETURNING id`,
-      [cuenta.codigo, cuenta.descripcion, cuenta.tipo, padreId, nivel, cuenta.saldo]
-    );
-    idByCodigo.set(cuenta.codigo, result.rows[0].id);
-  }
 }
 
 seed()

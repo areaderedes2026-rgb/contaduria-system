@@ -10,17 +10,27 @@ Hay **tres tipos de máquina**. No se instala lo mismo en todas.
 
 Internet en la oficina sirve para clonar/actualizar el servidor. Si un día no hay internet, el sistema **sigue** en la red local con lo ya instalado.
 
-La URL que van a usar las PCs de trabajo (reemplace la IP por la real):
+## Si hoy no hay internet de la oficina (usa datos / hotspot)
 
-```
-https://192.168.1.50:3000
-```
+**No perjudica** la red de la oficina. Bajar Git, Node, Docker y `npm install` por su celular o un hotspot es solo para descargar archivos.
 
-o, si configuró el nombre local:
+Lo que **sí** cambia es la IP de la PC: en el hotspot tendrá una IP (por ejemplo `192.168.43.x`) y cuando la conecte al WiFi de la oficina tendrá **otra**. Las demás PCs de la oficina **no** ven el hotspot de su celular, así que no podrían usar el sistema todavía.
+
+Haga así:
+
+1. **Con su internet (hotspot):** instalar Git, Node, Docker, clonar el repo, `npm install`, `npm run db:up`, migraciones, seed, `npm run build`, PM2, mkcert (`mkcert -install`).
+2. **Después, conectar esa PC al WiFi de la oficina** (aunque ese WiFi todavía no tenga internet).
+3. Recién ahí: IP fija, **Cambiar red** (doble clic, como administrador), firewall, y las otras PCs con el kit `infra\certs\kit-clientes`.
+
+No genere certificados ni anote “la IP definitiva” mientras esté en el hotspot. Cuando tenga internet de la oficina, las actualizaciones (`git pull` / Actualizar Contaduría) ya salen por esa red, sin volver al celular.
+
+La URL que van a usar **siempre** las PCs de trabajo (no cambia aunque cambie la IP):
 
 ```
 https://contaduria.local:3000
 ```
+
+La IP se actualiza sola en segundo plano (archivo `hosts` + certificados) con el atajo **Cambiar red**.
 
 ---
 
@@ -194,7 +204,7 @@ docker ps
 
 Debe aparecer `contaduria-postgres`.
 
-Luego:
+Luego (esquema vacío + lo mínimo para entrar):
 
 ```bat
 npm run db:migrate
@@ -202,14 +212,19 @@ npm run db:seed
 npm run build
 ```
 
-`db:seed` crea el usuario inicial:
+`db:migrate` solo crea las tablas. **No copia** expedientes, afectaciones ni saldos de ningún sistema anterior.
 
-- Usuario: `admin`
-- Contraseña: `Admin123!`
+`db:seed` deja el sistema usable desde cero, sin datos de trabajo:
 
-Eso se cambia **en cuanto entre** al sistema (paso B10).
+- roles y permisos
+- usuario `admin` / `Admin123!` (cámbielo en el paso B10)
+- nombre del sistema en configuración
+
+Quedan **vacíos**: plan de cuentas, proveedores, expedientes, afectaciones, libramientos y pagos. Eso se carga desde la aplicación.
 
 Si `npm run db:up` falla: Docker Desktop no terminó de arrancar. Ábralo, espere, y reintente.
+
+Si `db:migrate` se cortó a mitad (por ejemplo en `008`): **no** ejecute `db:reset`. Corrija el archivo si hace falta y vuelva a `npm run db:migrate`; continúa desde la que faltaba.
 
 ## B6. HTTPS (necesario para instalar la PWA en las otras PCs)
 
@@ -233,41 +248,32 @@ mkcert -install
 
 Acepte el diálogo de Windows de “instalar certificado”.
 
-### Generar certificados para esta red
+### Generar certificados y acceso estable (`contaduria.local`)
 
-En una terminal normal, en el proyecto (use **su** IP real):
+Con la PC **ya en el WiFi de la oficina**, doble clic (clic derecho → Ejecutar como administrador):
+
+`C:\contaduria\infra\scripts\cambiar-red.bat`
+
+O en una terminal:
 
 ```bat
 cd C:\contaduria
-npm run office:certs -- IP-SERVIDOR
+npm run office:red
 ```
 
-Ejemplo:
+Eso, sin pegar nada a mano:
 
-```bat
-npm run office:certs -- 192.168.1.50
-```
+- genera los certificados HTTPS (IP actual + `contaduria.local`)
+- escribe `HTTPS_KEY_PATH` / `HTTPS_CERT_PATH` en `apps\backend\.env`
+- pone `contaduria.local` en el `hosts` del servidor
+- arma `C:\contaduria\infra\certs\kit-clientes` (pendrive para las otras PCs)
+- reinicia PM2 si ya estaba corriendo
 
-Eso crea `C:\contaduria\infra\certs\` (no se sube a Git).
+Copie al escritorio un acceso directo a `cambiar-red.bat` con el nombre **Cambiar red**.
 
-### Pegar las rutas en el `.env`
+### Kit para las otras PCs
 
-Abra de nuevo `apps\backend\.env` y **agregue al final** (con barras `/`):
-
-```env
-HTTPS_KEY_PATH=C:/contaduria/infra/certs/contaduria-key.pem
-HTTPS_CERT_PATH=C:/contaduria/infra/certs/contaduria-cert.pem
-```
-
-### Dónde está la CA para las otras PCs
-
-En el servidor:
-
-```bat
-mkcert -CAROOT
-```
-
-Ahí hay un archivo `rootCA.pem`. Cópielo a un pendrive. Lo va a importar **una vez** en cada PC de trabajo (Parte C).
+La carpeta `infra\certs\kit-clientes` ya trae `rootCA.pem`, `oficina-ip.txt` y `configurar-acceso-cliente.bat`. Cópiela a un pendrive (Parte C).
 
 ## B7. Firewall de Windows (solo el puerto 3000)
 
@@ -293,13 +299,7 @@ Debe decir algo como `contaduria-api` **online**.
 Compruebe en **esa misma PC**, Chrome:
 
 ```
-https://127.0.0.1:3000
-```
-
-o
-
-```
-https://IP-SERVIDOR:3000
+https://contaduria.local:3000
 ```
 
 Puede avisar de certificado: continúe (en el servidor la CA ya está instalada con `mkcert -install`). Debe verse el login.
@@ -332,13 +332,17 @@ C:\contaduria\infra\scripts\iniciar-servidor.bat
 
 (ese archivo está en el repo; inicia Docker compose si hace falta y resucita PM2).
 
-## B9. Atajo para actualizar (escritorio del servidor)
+## B9. Atajos en el escritorio del servidor
 
-1. Vaya a `C:\contaduria\infra\scripts\actualizar-contaduria.bat`.
-2. Clic derecho → Enviar a → Escritorio (crear acceso directo).
-3. Renombre el acceso a **Actualizar Contaduría**.
+De `C:\contaduria\infra\scripts\`, envíe al escritorio:
 
-Desde ahora, para una versión nueva: usted hace `git push` en su PC y en la oficina **doble clic** en ese icono. Las otras PCs no tocan nada: les sale el cartel y recargan.
+| Archivo | Nombre del acceso | Para qué |
+|---------|-------------------|----------|
+| `actualizar-contaduria.bat` | **Actualizar Contaduría** | Nueva versión (git) |
+| `cambiar-red.bat` | **Cambiar red** | Cambió el WiFi o la IP |
+| `iniciar-servidor.bat` | **Iniciar servidor** | Si no arrancó solo al encender |
+
+Para una versión nueva: `git push` en su PC y en la oficina doble clic en **Actualizar Contaduría**.
 
 ## B10. Primer ingreso y seguridad
 
@@ -347,29 +351,27 @@ Desde ahora, para una versión nueva: usted hace `git push` en su PC y en la ofi
 3. Cree los usuarios reales (empleados) con rol adecuado.
 4. Pruebe crear un expediente de prueba.
 
-## B11. Nombre fácil `contaduria.local` (opcional pero cómodo)
+## B11. Nombre estable `contaduria.local` (obligatorio para no sufrir el día que cambien la red)
 
-En **cada** PC (servidor y clientes), Bloc de notas **como administrador** → abrir:
-
-```
-C:\Windows\System32\drivers\etc\hosts
-```
-
-Agregar al final (IP real):
+No instale la PWA usando `https://192.168.x.x:3000`. Use siempre:
 
 ```
-192.168.1.50    contaduria.local
+https://contaduria.local:3000
 ```
 
-Guardar. Luego usarán `https://contaduria.local:3000`.
+En el servidor lo deja **Cambiar red**. En cada PC de trabajo lo deja `configurar-acceso-cliente.bat` (Parte C).
 
-Si la IP del servidor cambia, hay que editar `hosts` en todas las PCs. Por eso la IP fija del B1.
+El día que cambien el router o el WiFi, no se reinstala el sistema ni la PWA: solo se vuelve a correr **Cambiar red** en el servidor y el `.bat` de acceso en cada puesto.
 
 ---
 
 # Parte C — Cada PC de trabajo (clientes)
 
 **No** instale Node, Git, Docker ni clone el repo.
+
+Copie a un pendrive la carpeta del servidor:
+
+`C:\contaduria\infra\certs\kit-clientes`
 
 ## C1. Misma red
 
@@ -379,29 +381,24 @@ La PC tiene que estar en la **misma WiFi/LAN** que el servidor. Apague VPN si mo
 
 Sin esto, el navegador muestra “No es seguro” y la PWA puede no instalarse.
 
-1. Copie `rootCA.pem` del pendrive (el de `mkcert -CAROOT` en el servidor) a esa PC.
-2. Doble clic en `rootCA.pem` (si Windows no lo abre, cambie la extensión a `.crt`).
-3. Instalar certificado → **Máquina local** → Siguiente.
-4. Marque **Colocar todos los certificados en el siguiente almacén** → Examinar → **Entidades de certificación raíz de confianza**.
-5. Finalizar. Acepte la advertencia de seguridad.
+1. En el pendrive, `rootCA.pem` (si Windows no lo abre, cámbielo a `.crt`).
+2. Instalar certificado → **Máquina local** → Siguiente.
+3. Marque **Colocar todos los certificados en el siguiente almacén** → Examinar → **Entidades de certificación raíz de confianza**.
+4. Finalizar. Acepte la advertencia de seguridad.
 
-Si no puede importar la CA: todavía pueden entrar con HTTPS aceptando el aviso, pero **Instalar app** en Chrome/Edge suele fallar. Conviene hacer la importación.
+Si cambia la red más adelante, **no** hay que volver a instalar esta CA.
 
-## C3. Abrir el sistema
+## C3. Apuntar `contaduria.local` (primera vez y si cambia la red)
 
-Chrome o Edge (recomendado):
+Clic derecho en `configurar-acceso-cliente.bat` → **Ejecutar como administrador**.
 
-```
-https://IP-SERVIDOR:3000
-```
-
-o
+Lee la IP de `oficina-ip.txt` (ya viene en el kit). Luego abra Chrome o Edge:
 
 ```
 https://contaduria.local:3000
 ```
 
-Debe verse el login, sin candado rojo.
+Debe verse el login, sin candado rojo. No use la IP para instalar la PWA.
 
 ## C4. Instalar como PWA
 
@@ -446,6 +443,20 @@ No hay que instalar nada. En 1–2 minutos (o al volver a la ventana) sale **“
 
 ---
 
+# Parte D2 — Si mañana cambian el WiFi o la IP
+
+No se reinstala Node, Docker ni la base. La PWA **tampoco** se reinstala si se abrió siempre como `https://contaduria.local:3000`.
+
+1. Conecte el **servidor** a la red nueva y, si puede, deje IP fija de nuevo.
+2. En el escritorio del servidor, **Cambiar red** (como administrador). Espere el mensaje de listo.
+3. Copie de nuevo `C:\contaduria\infra\certs\kit-clientes` al pendrive (trae la IP nueva).
+4. En **cada** PC de trabajo: `configurar-acceso-cliente.bat` como administrador.
+5. Abrir `https://contaduria.local:3000` (el mismo icono de la PWA).
+
+No hace falta volver a instalar `rootCA.pem`.
+
+---
+
 # Parte E — Uso diario del servidor
 
 Cada mañana, si la PC servidor se apagó:
@@ -462,7 +473,7 @@ npx pm2 resurrect
 
 o el `iniciar-servidor.bat`.
 
-4. Comprobar `https://IP-SERVIDOR:3000` desde otra PC.
+4. Comprobar `https://contaduria.local:3000` desde otra PC.
 
 No apague el servidor en horario de trabajo.
 
@@ -487,11 +498,11 @@ Programe uno diario (Programador de tareas, cada noche). Conserve 7–14 copias.
 - [ ] IP del servidor anotada y fija
 - [ ] Docker Desktop abre con Windows
 - [ ] `npx pm2 status` muestra `contaduria-api` online
-- [ ] `https://IP-SERVIDOR:3000` abre el login **desde otra PC**
+- [ ] `https://contaduria.local:3000` abre el login **desde otra PC**
 - [ ] Certificado CA importado en las PCs de trabajo
-- [ ] PWA instalada en cada puesto
+- [ ] PWA instalada desde `contaduria.local` (no desde la IP)
 - [ ] Contraseña de `admin` cambiada
-- [ ] Acceso directo **Actualizar Contaduría** en el escritorio del servidor
+- [ ] Accesos **Actualizar Contaduría** y **Cambiar red** en el escritorio del servidor
 - [ ] Puerto 3000 abierto en el firewall; 5433 cerrado a la red
 - [ ] Prueba con 2 PCs a la vez
 - [ ] Primera copia de respaldo de la base
@@ -503,7 +514,8 @@ Programe uno diario (Programador de tareas, cada noche). Conserve 7–14 copias.
 | Problema | Qué revisar |
 |----------|-------------|
 | “No se pudo conectar al servidor” en las otras PCs | IP, misma WiFi, firewall puerto 3000, PM2 online |
-| Login no carga / certificado rojo | Parte C2 (CA) o regenerar certs con la IP **actual** (`npm run office:certs -- IP`) y reiniciar PM2 |
+| Login no carga / certificado rojo | Parte C2 (CA) o **Cambiar red** en el servidor y el `.bat` de acceso en esa PC |
+| Cambió el WiFi y nadie entra | Parte D2: Cambiar red + kit-clientes en cada puesto |
 | Error de PostgreSQL al arrancar | Docker Desktop abierto + `npm run db:up` |
 | `git pull` pide clave | Token de GitHub; internet |
 | `npm run deploy` falla a mitad | No se reinició PM2; se queda la versión vieja. Corrija y vuelva a ejecutar el `.bat` |

@@ -479,17 +479,32 @@ No apague el servidor en horario de trabajo.
 
 ---
 
-# Parte F — Respaldo de la base (haga esto el mismo día)
+# Parte F — Respaldo (no perder datos)
 
-En el servidor, cree `C:\backups`.
+Todo el trabajo municipal está en PostgreSQL. El código se recupera con Git; **los datos**, con el archivo de respaldo.
 
-Respaldo manual:
+Formato: **`.sql.gz`** (SQL comprimido). No use RAR: Windows y el servidor lo restauran sin WinRAR.
+
+## Desde el sistema (recomendado)
+
+Con usuario **admin**: Configuración → **Respaldo** → **Descargar respaldo**.  
+El navegador abre la ventana para elegir carpeta (Descargas, USB, etc.). Luego súbalo a la nube.
+
+Haga una copia **al cierre de cada jornada** (o al menos semanal). Guarde USB + nube.
+
+## Recuperar en una PC nueva
+
+1. Instale el sistema (esta guía, Parte B). Docker en marcha.
+2. Copie el `.sql.gz` a esa PC.
+3. En el servidor:
 
 ```bat
-docker exec contaduria-postgres pg_dump -U contaduria contaduria > C:\backups\contaduria-manual.sql
+cd C:\contaduria-system
+npm run db:restore -- C:\Users\...\Downloads\contaduria-respaldo-AAAA-MM-DD_HHMM.sql.gz
+npx pm2 restart contaduria-api
 ```
 
-Programe uno diario (Programador de tareas, cada noche). Conserve 7–14 copias.
+Eso **reemplaza** la base actual por la del archivo. El `.env` y los certificados se vuelven a generar en esa PC (`office:red`); no van en el respaldo (son de esa máquina, no de la contaduría).
 
 ---
 

@@ -14,6 +14,7 @@ import consultasRoutes from './consultas.routes.js';
 import auditoriaRoutes from './auditoria.routes.js';
 import reportesRoutes from './reportes.routes.js';
 import configuracionRoutes from './configuracion.routes.js';
+import backupRoutes from './backup.routes.js';
 import anticiposRoutes from './anticipos.routes.js';
 import libramientosAnticipoRoutes from './libramientosAnticipo.routes.js';
 
@@ -34,6 +35,7 @@ router.use('/consultas', consultasRoutes);
 router.use('/auditoria', auditoriaRoutes);
 router.use('/reportes', reportesRoutes);
 router.use('/configuracion', configuracionRoutes);
+router.use('/backup', backupRoutes);
 
 router.get('/health', async (_req, res) => {
   try {

@@ -15,19 +15,30 @@ export const OFFICE_HOSTNAME = 'contaduria.local';
 export const certsDir = join(root, 'infra/certs');
 export const kitDir = join(certsDir, 'kit-clientes');
 
+const SKIP_IFACE = /vethernet|wsl|hyper-v|virtualbox|vmware|loopback|docker|bluetooth|hamachi|zerotier|radmin/i;
+
 export function detectLanIps() {
   const nets = networkInterfaces();
-  const ips = [];
-  for (const entries of Object.values(nets)) {
+  const preferred = [];
+  const others = [];
+  for (const [name, entries] of Object.entries(nets)) {
     if (!entries) continue;
+    if (SKIP_IFACE.test(name)) continue;
     for (const net of entries) {
       const family = String(net.family);
       if (family !== 'IPv4' && family !== '4') continue;
       if (net.internal) continue;
-      ips.push(net.address);
+      if (net.address.startsWith('169.254.')) continue;
+      // Máscara típica de WSL (192.168.x.x /20)
+      if (net.netmask === '255.255.240.0') continue;
+      if (net.address.startsWith('192.168.') || net.address.startsWith('10.') || net.address.startsWith('172.')) {
+        preferred.push(net.address);
+      } else {
+        others.push(net.address);
+      }
     }
   }
-  return ips;
+  return [...new Set([...preferred, ...others])];
 }
 
 export function isValidIpv4(value) {

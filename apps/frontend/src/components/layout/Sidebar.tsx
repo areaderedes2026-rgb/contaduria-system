@@ -20,6 +20,7 @@ import {
   Printer,
   HandCoins,
   Landmark,
+  Database,
   type LucideIcon,
 } from 'lucide-react';
 import { useAuthStore } from '@/stores/authStore';
@@ -116,6 +117,7 @@ const navEntries: NavEntry[] = [
         permission: 'configuracion:read',
       },
       { to: '/auditoria', icon: Shield, label: 'Auditoría', permission: 'auditoria:read' },
+      { to: '/configuracion/respaldo', icon: Database, label: 'Respaldo', permission: 'configuracion:write' },
     ],
   },
 ];

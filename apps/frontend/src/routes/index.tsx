@@ -24,6 +24,7 @@ import { AnticiposPage } from '@/pages/AnticiposPage';
 import { AnticipoDetailPage } from '@/pages/AnticipoDetailPage';
 import { LibramientoAnticipoDetailPage } from '@/pages/LibramientoAnticipoDetailPage';
 import { ConfigCargosARendirPage } from '@/pages/ConfigCargosARendirPage';
+import { BackupPage } from '@/pages/BackupPage';
 
 function RedirectCargosARendirDetalle() {
   const { id } = useParams();
@@ -157,6 +158,7 @@ const router = createBrowserRouter([
         children: [
           { path: '/impresiones', element: <ImpresionesPage /> },
           { path: '/configuracion/cargos-a-rendir', element: <ConfigCargosARendirPage /> },
+          { path: '/configuracion/respaldo', element: <BackupPage /> },
         ],
       },
     ],
